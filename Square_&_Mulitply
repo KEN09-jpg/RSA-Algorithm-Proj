@@ -1,0 +1,59 @@
+import random, time
+
+
+# ---------- Person A (Max): fast method, square-and-multiply ----------
+def powmod_sm(base: int, exponent: int, modulus: int) -> int:
+    """Return (base ** exponent) % modulus using binary exponentiation.
+
+    Requires integer inputs, exponent >= 0, and modulus > 0.
+    """
+    if any(type(x) is not int for x in (base, exponent, modulus)):
+        raise TypeError("base, exponent, and modulus must be integers")
+    if exponent < 0:
+        raise ValueError("exponent must be nonnegative")
+    if modulus <= 0:
+        raise ValueError("modulus must be positive")
+
+    result = 1 % modulus
+    base %= modulus
+    while exponent > 0:
+        if exponent % 2 == 1:
+            result = (result * base) % modulus
+        base = (base * base) % modulus
+        exponent //= 2
+    return result
+
+
+# ---------- Person B (Kendrik): naive method and benchmarks ----------
+def powmod_naive(base, exponent, modulus):
+    """Slow: multiply base by itself `exponent` times -> O(b), about 2^k."""
+    result = 1 % modulus
+    for _ in range(exponent):
+        result = result * base % modulus
+    return result
+
+def fast_multiplications(exponent):
+    """Multiplications powmod_sm does: 1 squaring per bit + 1 multiply per 1-bit."""
+    return exponent.bit_length() + bin(exponent).count("1")
+
+def timed(powmod, base, exponent, modulus):
+    start = time.perf_counter()
+    result = powmod(base, exponent, modulus)
+    elapsed_ms = round((time.perf_counter() - start) * 1000, 3)
+    assert result == pow(base, exponent, modulus)    # check vs. Python's built-in
+    return elapsed_ms
+
+random.seed(12345)
+print("bits | slow mults, ms | fast mults, ms")
+for bit_length in [8, 12, 16, 20]:                   # small: slow still finishes
+    top_bit = 1 << bit_length - 1
+    base, exponent, modulus = [random.getrandbits(bit_length) | top_bit for _ in range(3)]
+    print(bit_length,
+          (exponent, timed(powmod_naive, base, exponent, modulus)),
+          (fast_multiplications(exponent), timed(powmod_sm, base, exponent, modulus)))
+
+print("\nbits | fast mults, ms")
+for bit_length in [512, 1024, 2048]:                 # huge: slow would never finish
+    top_bit = 1 << bit_length - 1
+    base, exponent, modulus = [random.getrandbits(bit_length) | top_bit for _ in range(3)]
+    print(bit_length, (fast_multiplications(exponent), timed(powmod_sm, base, exponent, modulus)))
