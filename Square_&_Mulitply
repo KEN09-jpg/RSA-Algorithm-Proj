@@ -1,3 +1,5 @@
+#to run type "python3 "Square_&_Multiply.py" into the vs code terminal make sure to change paths to do it vscode
+#or just hit run on the top left then start debugging and select python file
 import random, time
 
 
